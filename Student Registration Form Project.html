@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            align-items: center; /* Center elements horizontally */
+            height: 100vh; /* Full height */
+            overflow: hidden; /* Prevent body overflow */
+        }
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 20px; /* Increased margin for spacing */
+            width: 100%;
+        }
+        .container {
+            display: flex;
+            justify-content: center; /* Center container */
+            width: 100%;
+            height: calc(100% - 60px); /* Adjust height for title */
+        }
+        form {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%; /* Full width on small screens */
+            max-width: 350px; /* Max width for larger screens */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column; /* Stack form elements vertically */
+        }
+        input {
+            width: 100%; /* Full width of the form */
+            padding: 8px; /* Reduced padding for smaller input */
+            margin: 10px 0; /* Spacing between inputs */
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 14px; /* Smaller font size */
+            background: transparent; /* Transparent background */
+            color: black; /* Input text color */
+            transition: border-color 0.3s;
+        }
+        input::placeholder {
+            color: rgba(0, 0, 0, 0.7); /* Placeholder color */
+        }
+        input:focus {
+            border-color: #6a11cb; /* Border color on focus */
+            outline: none; /* Remove outline */
+        }
+        label {
+            margin: 5px 0;
+            font-weight: bold;
+            color: black; /* Set label text to black */
+        }
+        button {
+            cursor: pointer;
+            background-color: #2575fc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            transition: background-color 0.3s, transform 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #1a5bb8; /* Darken on hover */
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .output {
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            border-radius: 10px;
+            color: black;
+            min-height: 200px; /* Minimum height */
+            width: 100%; /* Full width on small screens */
+            max-width: 350px; /* Max width for larger screens */
+            overflow-y: auto; /* Allow vertical scrolling */
+            margin-left: 20px; /* Space between form and output */
+        }
+        .student-entry {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 600px) {
+            .container {
+                flex-direction: column; /* Stack form and output vertically */
+                align-items: center; /* Center elements */
+            }
+            .output {
+                margin-left: 0; /* Reset margin for mobile */
+                margin-top: 20px; /* Add top margin */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Student Registration Form</h1>
+<div class="container">
+    <form id="registrationForm">
+        <label for="studentName">Student Name:</label>
+        <input type="text" id="studentName" required placeholder="Enter student name">
+
+        <label for="studentId">Student ID:</label>
+        <input type="number" id="studentId" required placeholder="Enter student ID" min="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+
+        <label for="email">Email ID:</label>
+        <input type="email" id="email" required placeholder="Enter email ID">
+
+        <label for="contactNumber">Contact Number:</label>
+        <input type="text" id="contactNumber" required placeholder="Enter contact number" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+
+        <button type="submit">Register</button>
+    </form>
+
+    <div class="output" id="output"></div>
+</div>
+
+<script>
+    const outputDiv = document.getElementById('output');
+    let currentEntry = null;
+
+    // Load existing data from localStorage
+    window.onload = function() {
+        const storedEntries = JSON.parse(localStorage.getItem('students')) || [];
+        storedEntries.forEach(entry => addStudentEntry(entry));
+    };
+
+    document.getElementById('registrationForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the form from submitting the default way
+
+        // Get values from the form
+        const studentName = document.getElementById('studentName').value;
+        const studentId = document.getElementById('studentId').value;
+        const email = document.getElementById('email').value;
+        const contactNumber = document.getElementById('contactNumber').value;
+
+        // Validate Email ID
+        if (!email) {
+            alert('Email ID is required');
+            return;
+        }
+
+        // Validate Contact Number: should be numeric
+        if (!/^\d+$/.test(contactNumber)) {
+            alert('Contact Number must be a numeric value.');
+            return;
+        }
+
+        const studentEntry = {
+            name: studentName,
+            id: studentId,
+            email: email,
+            contact: contactNumber
+        };
+
+        if (currentEntry) {
+            // Update existing entry
+            currentEntry.querySelector('.name').textContent = studentName;
+            currentEntry.querySelector('.id').textContent = studentId;
+            currentEntry.querySelector('.email').textContent = email;
+            currentEntry.querySelector('.contact').textContent = contactNumber;
+            currentEntry = null; // Reset current entry after editing
+        } else {
+            // Add the new student entry to the output
+            addStudentEntry(studentEntry);
+        }
+
+        // Save to localStorage
+        saveToLocalStorage();
+
+        // Clear the form after registering
+        document.getElementById('registrationForm').reset();
+    });
+
+    function addStudentEntry(entry) {
+        const studentEntryDiv = document.createElement('div');
+        studentEntryDiv.classList.add('student-entry');
+        studentEntryDiv.innerHTML = `
+            <h3>Registered Student:</h3>
+            <p><strong>Name:</strong> <span class="name">${entry.name}</span></p>
+            <p><strong>Student ID:</strong> <span class="id">${entry.id}</span></p>
+            <p><strong>Email ID:</strong> <span class="email">${entry.email}</span></p>
+            <p><strong>Contact Number:</strong> <span class="contact">${entry.contact}</span></p>
+            <button class="editButton">Edit</button>
+            <button class="deleteButton">Delete</button>
+        `;
+
+        // Add the new student entry to the output
+        outputDiv.appendChild(studentEntryDiv);
+
+        // Add event listener to delete button
+        studentEntryDiv.querySelector('.deleteButton').addEventListener('click', function() {
+            outputDiv.removeChild(studentEntryDiv); // Remove the student entry
+            removeFromLocalStorage(entry.id); // Remove from localStorage
+        });
+
+        // Add event listener to edit button
+        studentEntryDiv.querySelector('.editButton').addEventListener('click', function() {
+            // Set the form fields with the current entry's data for editing
+            document.getElementById('studentName').value = entry.name;
+            document.getElementById('studentId').value = entry.id;
+            document.getElementById('email').value = entry.email;
+            document.getElementById('contactNumber').value = entry.contact;
+
+            // Set the current entry for updating later
+            currentEntry = studentEntryDiv;
+        });
+    }
+
+    function saveToLocalStorage() {
+        const studentEntries = [];
+        const studentEntriesDivs = outputDiv.getElementsByClassName('student-entry');
+
+        for (let entryDiv of studentEntriesDivs) {
+            const name = entryDiv.querySelector('.name').textContent;
+            const id = entryDiv.querySelector('.id').textContent;
+            const email = entryDiv.querySelector('.email').textContent;
+            const contact = entryDiv.querySelector('.contact').textContent;
+
+            studentEntries.push({ name, id, email, contact });
+        }
+
+        localStorage.setItem('students', JSON.stringify(studentEntries));
+    }
+
+    function removeFromLocalStorage(studentId) {
+        const storedEntries = JSON.parse(localStorage.getItem('students')) || [];
+        const updatedEntries = storedEntries.filter(entry => entry.id !== studentId);
+        localStorage.setItem('students', JSON.stringify(updatedEntries));
+    }
+</script>
+
+</body>
+</html>
